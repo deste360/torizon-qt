@@ -1,0 +1,49 @@
+version: "2.4"
+services:
+
+  wayland:
+    build:
+      context: ./app
+    image: deste/torizon-test-app
+    restart: always
+    depends_on:
+      - "weston"
+    # Required to get udev events from host udevd via netlink
+    network_mode: host
+    volumes:
+      - type: bind
+        source: /tmp
+        target: /tmp
+      - type: bind
+        source: /dev/dri
+        target: /dev/dri
+    # Add device access rights through cgroup...
+    device_cgroup_rules:
+      # ... for /dev/dri devices
+      - 'c 226:* rmw'
+
+  weston:
+    image: torizon/arm32v7-debian-weston:latest
+    restart: always
+    # Required to get udev events from host udevd via netlink
+    network_mode: host
+    volumes:
+      - type: bind
+        source: /tmp
+        target: /tmp
+      - type: bind
+        source: /dev
+        target: /dev
+      - type: bind
+        source: /run/udev
+        target: /run/udev
+    cap_add:
+      - CAP_SYS_TTY_CONFIG
+    # Add device access rights through cgroup...
+    device_cgroup_rules:
+      # ... for all tty
+      - 'c 4:* rmw'
+      # ... for /dev/input devices
+      - 'c 13:* rmw'
+      # ... for /dev/dri devices
+      - 'c 226:* rmw'
